@@ -17,7 +17,7 @@ from .serializers import (
 						)
 
 @api_view(['GET'])
-# @permission_classes((permissions.IsAuthenticated,))
+
 @permission_classes((permissions.AllowAny,))
 def all_news(request):
 #Returns all news without any filter
