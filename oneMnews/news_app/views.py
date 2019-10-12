@@ -4,7 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 import datetime
-
+from rest_framework.pagination import PageNumberPagination
 from .models import (
 						NewsTypes,
 						Country,
@@ -24,10 +24,13 @@ def all_news(request):
 
 	if request.method == 'GET':
 
+		paginator = PageNumberPagination()
+		paginator.page_size = 5
 		news = News.objects.all()
-		serializer = NewsSerializer(news, many=True)
+		result_page = paginator.paginate_queryset(news, request)
+		serializer = NewsSerializer(result_page, many=True)
 		response_data = serializer.data
-		return Response(response_data, status=status.HTTP_200_OK)
+		return paginator.get_paginated_response(response_data)
 		
 
 @api_view(['GET'])
