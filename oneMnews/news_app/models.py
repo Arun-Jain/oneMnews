@@ -107,5 +107,3 @@ class News(models.Model):
 
 	class Meta:
 		db_table = 'news'
-
-	

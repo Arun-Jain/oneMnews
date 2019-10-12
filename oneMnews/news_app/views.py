@@ -3,6 +3,8 @@ from rest_framework import permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+import datetime
+
 from .models import (
 						NewsTypes,
 						Country,
@@ -12,18 +14,21 @@ from .serializers import (
 							NewsTypesSerializer,
 							CountrySerializer,
 							NewsSerializer,
-							)
+						)
 
 @api_view(['GET'])
-@permission_classes((permissions.IsAuthenticated,))
+# @permission_classes((permissions.IsAuthenticated,))
+@permission_classes((permissions.AllowAny,))
 def all_news(request):
 #Returns all news without any filter
 
 	if request.method == 'GET':
+
 		news = News.objects.all()
 		serializer = NewsSerializer(news, many=True)
 		response_data = serializer.data
 		return Response(response_data, status=status.HTTP_200_OK)
+		
 
 @api_view(['GET'])
 @permission_classes((permissions.AllowAny,))
@@ -66,8 +71,25 @@ def country_news(request, c_type):
 @permission_classes((permissions.AllowAny,))
 def trending_news(request):
 #Returns all trending news also flag should be true
+#last_day_trending_news returns last 24 hours news(filter also included as get days for display trending news)
 	if request.method == 'GET':
-		filtered_news = News.objects.filter(is_trending='Y', flag=True)
-		serializer = NewsSerializer(filtered_news, many=True)
-		response_data = serializer.data
-		return Response(response_data, status=status.HTTP_200_OK)
+		latest_trending_news = request.GET.get('latest', '')
+
+		if latest_trending_news:
+			try:
+				last_day_trending_news = News.objects.filter(is_trending='Y', flag=True, updated_at__gte=(datetime.datetime.now()-datetime.timedelta(days=int(latest_trending_news))))
+			except:
+				response_data = {'error': 'trending news date is invalid'}
+				return Response(response_data, status=status.HTTP_406_NOT_ACCEPTABLE)
+
+			serializer = NewsSerializer(last_day_trending_news, many=True)
+			response_data = serializer.data
+
+			return Response(response_data, status=status.HTTP_200_OK)
+
+		else:
+			filtered_news = News.objects.filter(is_trending='Y', flag=True)
+			serializer = NewsSerializer(filtered_news, many=True)
+			response_data = serializer.data
+			
+			return Response(response_data, status=status.HTTP_200_OK)
